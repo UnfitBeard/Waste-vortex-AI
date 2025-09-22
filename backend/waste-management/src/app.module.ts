@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
-
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AnalyticsModule } from './analytics/analytics.module';
@@ -33,7 +32,6 @@ import { WasteModule } from './waste/waste.module';
         },
       }),
     }),
-
     AnalyticsModule,
     AuthModule,
     UsersModule,
