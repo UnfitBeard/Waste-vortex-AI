@@ -70,18 +70,94 @@ export class UsersService {
   }
 
   async update(id: string, updateData: Partial<UserType>) {
+    console.log(`\n🔄 [UsersService] Updating user ${id} with data:`, JSON.stringify(updateData, null, 2));
+    
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid user ID');
     }
-    const user = await this.model.findByIdAndUpdate(
-      id,
-      { $set: updateData },
-      { new: true }
-    );
-    if (!user) {
-      throw new NotFoundException('User not found');
+
+    // First, verify the user exists
+    const userExists = await this.model.exists({ _id: new Types.ObjectId(id) });
+    if (!userExists) {
+      console.error(`❌ [UsersService] User not found with id: ${id}`);
+      throw new NotFoundException(`User with ID ${id} not found`);
     }
-    return user;
+    
+    // Create a copy of updateData to avoid modifying the original
+    const update = { ...updateData };
+    
+    // Handle password reset token
+    if (update.resetPasswordToken) {
+      console.log('🔑 Reset password token update detected');
+      if (!update.resetPasswordExpires) {
+        // Set default expiration to 1 hour if not provided
+        update.resetPasswordExpires = new Date(Date.now() + 3600000);
+      }
+    }
+    
+    // Handle email updates
+    if (update.email) {
+      console.log('📧 Email update detected, generating verification token');
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      
+      update.emailVerificationToken = verificationToken;
+      update.emailVerificationExpires = verificationExpires;
+      update.isEmailVerified = false;
+    }
+    
+    try {
+      // First try to update and return the document in one operation
+      let updatedUser = await this.model.findOneAndUpdate(
+        { _id: new Types.ObjectId(id) },
+        { $set: update },
+        { new: true, runValidators: true }
+      );
+      
+      // If that fails, try a two-step approach
+      if (!updatedUser) {
+        console.log('⚠️  First update attempt failed, trying alternative approach...');
+        const result = await this.model.updateOne(
+          { _id: new Types.ObjectId(id) },
+          { $set: update },
+          { runValidators: true }
+        );
+        
+        if (result.matchedCount === 0) {
+          throw new NotFoundException(`User with ID ${id} not found`);
+        }
+        
+        // Try to fetch the user separately
+        updatedUser = await this.model.findById(id);
+      }
+      
+      // If we still don't have the user, log a warning but don't fail
+      if (!updatedUser) {
+        console.warn(`⚠️  [UsersService] Unable to fetch updated user ${id}, but update was successful`);
+        // Return a minimal user object with just the ID
+        return { _id: new Types.ObjectId(id), ...update } as any;
+      }
+      
+      console.log('✅ [UsersService] User updated successfully:', {
+        userId: updatedUser._id,
+        updatedFields: Object.keys(update)
+      });
+      
+      return updatedUser;
+      
+    } catch (error) {
+      console.error('❌ [UsersService] Error updating user:', {
+        error: error.message,
+        userId: id,
+        stack: error.stack
+      });
+      
+      if (error.code === 11000) {
+        throw new BadRequestException('Email already in use');
+      }
+      
+      throw new InternalServerErrorException('Failed to update user');
+    }
   }
 
   async findById(id: string): Promise<IUser> {
@@ -467,39 +543,44 @@ export class UsersService {
         };
       }
 
-      console.log(`ℹ️  [resendVerificationEmail] Found user: ${user._id} (verified: ${user.isEmailVerified})`);
-
       // Check if email is already verified
       if (user.isEmailVerified) {
-        console.log(`ℹ️  [resendVerificationEmail] Email ${normalizedEmail} is already verified`);
-        return { 
+        console.log(`ℹ️  [resendVerificationEmail] Email already verified: ${normalizedEmail}`);
+        return {
           status: 200,
-          message: 'This email is already verified' 
+          message: 'This email is already verified'
         };
       }
 
-      // Generate a new verification token and update the user
+      // Generate new verification token
       const verificationToken = crypto.randomBytes(32).toString('hex');
       const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-      await this.model.findByIdAndUpdate(user._id, {
-        $set: {
-          emailVerificationToken: verificationToken,
-          emailVerificationExpires: verificationExpires,
-          isEmailVerified: false // Reset verification status to ensure the new token works
-        }
-      });
-
-      const frontendUrl = this.config.get('FRONTEND_URL');
-      if (!frontendUrl) {
-        throw new Error('FRONTEND_URL is not configured');
+      
+      // Update user with new verification token
+      const updatedUser = await this.model.findByIdAndUpdate(
+        user._id,
+        {
+          $set: {
+            emailVerificationToken: verificationToken,
+            emailVerificationExpires: verificationExpires
+          }
+        },
+        { new: true, lean: true }
+      );
+      
+      if (!updatedUser) {
+        throw new InternalServerErrorException('Failed to update verification token');
       }
 
+      // Get frontend URL from config
+      const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3500');
       const verificationUrl = `${frontendUrl}/users/verify-email?token=${verificationToken}`;
+      
       if (!user.email) {
         throw new Error('User email is not set');
       }
       
+      // Send verification email
       await this.mailService.sendEmailVerification(user.email, verificationUrl);
       
       console.log(`✅ [resendVerificationEmail] Verification email sent to: ${user.email}`);
