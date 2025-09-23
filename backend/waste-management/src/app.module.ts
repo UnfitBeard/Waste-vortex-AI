@@ -32,7 +32,6 @@ import { WasteModule } from './waste/waste.module';
         },
       }),
     }),
-
     AnalyticsModule,
     AuthModule,
     UsersModule,
