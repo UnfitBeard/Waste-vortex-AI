@@ -1,0 +1,12 @@
+flask-cors 
+flask
+Pillow
+# fastembed 
+# onnxruntime 
+# protobuf 
+# scikit-learn 
+# joblib 
+scipy
+numpy
+flassger
+pyyaml
