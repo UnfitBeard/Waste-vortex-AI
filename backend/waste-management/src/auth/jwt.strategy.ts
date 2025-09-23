@@ -1,5 +1,4 @@
-// src/auth/jwt.strategy.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy, StrategyOptions } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -9,6 +8,7 @@ export interface JwtPayload {
   role: string;
   email?: string;
   name?: string;
+  type?: 'access' | 'refresh';
   iat?: number;
   exp?: number;
 }
@@ -31,11 +31,22 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super(opts);
   }
 
-  // whatever you return becomes req.user
-  // eslint-disable-next-line @typescript-eslint/require-await
+  /**
+   * Validate the JWT payload and return the user object.
+   * This method is called after the token is validated.
+   * @param payload The JWT payload
+   * @returns The user object that will be attached to the request
+   */
   async validate(payload: JwtPayload) {
+    // For access tokens, we don't have a type field, but for refresh tokens we do
+    // So we only check type if it exists in the payload
+    if (payload.type && payload.type !== 'access') {
+      throw new UnauthorizedException('Invalid token type');
+    }
+    
     return {
-      userId: payload.sub,
+      sub: payload.sub, // Standard claim name for user ID
+      userId: payload.sub, // Keep for backward compatibility
       role: payload.role,
       email: payload.email,
       name: payload.name,

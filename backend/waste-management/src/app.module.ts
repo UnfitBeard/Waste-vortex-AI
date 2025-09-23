@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { DeliveriesModule } from './deliveries/deliveries.module';
 import { WasteModule } from './waste/waste.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { WasteModule } from './waste/waste.module';
     UsersModule,
     DeliveriesModule,
     WasteModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
