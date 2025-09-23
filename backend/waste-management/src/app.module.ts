@@ -10,6 +10,7 @@ import { UsersModule } from './users/users.module';
 import { DeliveriesModule } from './deliveries/deliveries.module';
 import { WasteModule } from './waste/waste.module';
 import { MailModule } from './mail/mail.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { MailModule } from './mail/mail.module';
     DeliveriesModule,
     WasteModule,
     MailModule,
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
