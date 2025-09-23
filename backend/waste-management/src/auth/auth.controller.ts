@@ -1,21 +1,26 @@
-import { 
-  Body, 
-  Controller, 
-  Post, 
-  HttpStatus, 
-  UseGuards, 
-  Req, 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+import {
+  Body,
+  Controller,
+  Post,
+  HttpStatus,
+  UseGuards,
+  Req,
   Get,
   HttpCode,
   BadRequestException,
-  UnauthorizedException
+  UnauthorizedException,
 } from '@nestjs/common';
-import { 
-  ApiTags, 
-  ApiOperation, 
-  ApiResponse, 
-  ApiBody, 
-  ApiBearerAuth 
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dtos/register.dto';
@@ -34,12 +39,13 @@ export class AuthController {
   @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Register a new user',
-    description: 'Create a new user account with the provided information. A verification email will be sent to the provided email address.'
+    description:
+      'Create a new user account with the provided information. A verification email will be sent to the provided email address.',
   })
-  @ApiResponse({ 
-    status: HttpStatus.CREATED, 
+  @ApiResponse({
+    status: HttpStatus.CREATED,
     description: 'User registered successfully. Verification email sent.',
     schema: {
       type: 'object',
@@ -47,23 +53,27 @@ export class AuthController {
         _id: { type: 'string' },
         name: { type: 'string' },
         email: { type: 'string' },
-        role: { type: 'string', enum: ['USER', 'ADMIN', 'COLLECTOR', 'RECYCLER', 'HOUSEHOLD'] },
-        message: { 
+        role: {
           type: 'string',
-          example: 'Registration successful! Please check your email to verify your account before logging in.'
-        }
-      }
-    }
+          enum: ['USER', 'ADMIN', 'COLLECTOR', 'RECYCLER', 'HOUSEHOLD'],
+        },
+        message: {
+          type: 'string',
+          example:
+            'Registration successful! Please check your email to verify your account before logging in.',
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: HttpStatus.BAD_REQUEST, 
-    description: 'Invalid input data'
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data',
   })
-  @ApiResponse({ 
-    status: HttpStatus.CONFLICT, 
-    description: 'Email already registered'
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Email already registered',
   })
-  @ApiBody({ 
+  @ApiBody({
     type: RegisterDto,
     description: 'User registration data',
     examples: {
@@ -73,10 +83,10 @@ export class AuthController {
           name: 'John Doe',
           email: 'john@example.com',
           password: 'SecurePassword123!',
-          role: 'HOUSEHOLD'
-        }
-      }
-    }
+          role: 'HOUSEHOLD',
+        },
+      },
+    },
   })
   async register(@Body() dto: RegisterDto) {
     try {
@@ -94,12 +104,12 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Login user',
-    description: 'Authenticate user with email and password.'
+    description: 'Authenticate user with email and password.',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
+  @ApiResponse({
+    status: HttpStatus.OK,
     description: 'User successfully logged in',
     schema: {
       example: {
@@ -109,18 +119,18 @@ export class AuthController {
           id: 'string',
           name: 'string',
           email: 'string',
-          role: 'USER'
-        }
-      }
-    }
+          role: 'USER',
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: HttpStatus.UNAUTHORIZED, 
-    description: 'Invalid credentials'
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid credentials',
   })
-  @ApiBody({ 
+  @ApiBody({
     type: LoginDto,
-    description: 'User login credentials'
+    description: 'User login credentials',
   })
   async login(@Body() dto: LoginDto) {
     try {
@@ -133,55 +143,61 @@ export class AuthController {
   @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Request password reset',
-    description: 'Request a password reset link to be sent to the provided email.'
+    description:
+      'Request a password reset link to be sent to the provided email.',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'If the email is registered, a password reset link will be sent',
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description:
+      'If the email is registered, a password reset link will be sent',
     schema: {
       example: {
-        message: 'If your email is registered, you will receive a password reset link'
-      }
-    }
+        message:
+          'If your email is registered, you will receive a password reset link',
+      },
+    },
   })
-  @ApiBody({ 
+  @ApiBody({
     type: ForgotPasswordDto,
-    description: 'Email address for password reset'
+    description: 'Email address for password reset',
   })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     try {
       return await this.auth.forgotPassword(dto);
     } catch (error) {
       // Don't reveal if the email exists or not for security reasons
-      return { message: 'If your email is registered, you will receive a password reset link' };
+      return {
+        message:
+          'If your email is registered, you will receive a password reset link',
+      };
     }
   }
 
   @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Reset password with a valid token',
-    description: 'Reset the user password using a valid reset token.'
+    description: 'Reset the user password using a valid reset token.',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
+  @ApiResponse({
+    status: HttpStatus.OK,
     description: 'Password has been reset successfully',
     schema: {
       example: {
-        message: 'Password has been reset successfully'
-      }
-    }
+        message: 'Password has been reset successfully',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: HttpStatus.BAD_REQUEST, 
-    description: 'Invalid or expired token'
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid or expired token',
   })
-  @ApiBody({ 
+  @ApiBody({
     type: ResetPasswordDto,
-    description: 'Password reset data with token and new password'
+    description: 'Password reset data with token and new password',
   })
   async resetPassword(@Body() dto: ResetPasswordDto) {
     try {
@@ -194,12 +210,12 @@ export class AuthController {
   @Public()
   @Post('refresh-token')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Refresh access token',
-    description: 'Get a new access token using a valid refresh token.'
+    description: 'Get a new access token using a valid refresh token.',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
+  @ApiResponse({
+    status: HttpStatus.OK,
     description: 'New access token generated',
     schema: {
       example: {
@@ -209,18 +225,18 @@ export class AuthController {
           id: 'string',
           name: 'string',
           email: 'string',
-          role: 'USER'
-        }
-      }
-    }
+          role: 'USER',
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: HttpStatus.UNAUTHORIZED, 
-    description: 'Invalid refresh token'
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid refresh token',
   })
-  @ApiBody({ 
+  @ApiBody({
     type: RefreshTokenDto,
-    description: 'Refresh token data'
+    description: 'Refresh token data',
   })
   async refreshToken(@Body() dto: RefreshTokenDto) {
     try {
@@ -234,32 +250,32 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Logout user',
-    description: 'Invalidate the current refresh token.'
+    description: 'Invalidate the current refresh token.',
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
+  @ApiResponse({
+    status: HttpStatus.OK,
     description: 'Successfully logged out',
     schema: {
       example: {
-        message: 'Successfully logged out'
-      }
-    }
+        message: 'Successfully logged out',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: HttpStatus.UNAUTHORIZED, 
-    description: 'Unauthorized - No valid token provided'
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - No valid token provided',
   })
   async logout(@Req() req: any) {
     try {
       const authHeader = req.headers.authorization;
       const token = authHeader && authHeader.split(' ')[1];
-      
+
       if (!token) {
         throw new UnauthorizedException('No token provided');
       }
-      
+
       await this.auth.logout(req.user.sub, token);
       return { message: 'Successfully logged out' };
     } catch (error) {
