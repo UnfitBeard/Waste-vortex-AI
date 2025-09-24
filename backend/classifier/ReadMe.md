@@ -43,13 +43,3 @@
    - Use `/predict` → upload a waste image → get JSON contamination score.
 
 ---
-
-## 🧑‍🤝‍🧑 Sharing with Friends
-
-- Just zip the folder (with `app.py`, `requirements.txt`, and maybe a README).
-- Tell them to follow the **steps above** exactly.
-- Each person creates their own `venv` locally → installs deps → runs the API.
-
----
-
-Do you want me to also generate a **README.md** (formatted nicely with commands + screenshots placeholder) so your friends don’t even need to read instructions separately?
