@@ -11,6 +11,7 @@ import { DeliveriesModule } from './deliveries/deliveries.module';
 import { WasteModule } from './waste/waste.module';
 import { MailModule } from './mail/mail.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { PickupModule } from './pickup/pickup.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { UploadsModule } from './uploads/uploads.module';
     WasteModule,
     MailModule,
     UploadsModule,
+    PickupModule,
   ],
   controllers: [AppController],
   providers: [AppService],
