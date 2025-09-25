@@ -6,7 +6,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Pickup, PickupDocument } from './schema/pickup.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { UploadsService } from 'src/uploads/uploads.service';
 import { ContaminationClient } from './contamination.client';
 import { CreatePickupDto } from './dtos/create-pickup.dto';
@@ -23,7 +23,12 @@ export class PickupService {
     private readonly contaminationClient: ContaminationClient,
   ) {}
 
-  async createPickup(dto: CreatePickupDto, image: Express.Multer.File) {
+  async createPickup(
+    dto: CreatePickupDto,
+    image: Express.Multer.File,
+    requestedBy: string,
+  ) {
+    if (!requestedBy) throw new BadRequestException('User not found');
     if (!image) throw new BadRequestException('Image file is required');
 
     const uploaded = await this.uploadsService.uploadSingleImage(image);
@@ -55,6 +60,12 @@ export class PickupService {
       contaminationLabel: scoreRes.label,
       evaluatedAt: new Date(),
       status: 'pending',
+      requestedBy: new Types.ObjectId(requestedBy),
+      address: dto.address,
+      geom:
+        dto.lat != null && dto.lng != null
+          ? { type: 'Point', coordinates: [dto.lat, dto.lat] }
+          : undefined,
     });
 
     return doc.save();
