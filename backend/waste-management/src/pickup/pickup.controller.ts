@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Controller,
   Post,
@@ -9,6 +12,7 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiParam, ApiTags } from '@nestjs/swagger';
@@ -40,8 +44,12 @@ export class PickupController {
             'other',
           ],
         },
+
         estimatedWeightKg: { type: 'number', example: 12.5 },
         description: { type: 'string' },
+        address: { type: 'string' },
+        lat: { type: 'number' },
+        lng: { type: 'number' },
       },
       required: ['image', 'wasteType', 'estimatedWeightKg'],
     },
@@ -57,8 +65,14 @@ export class PickupController {
     )
     image: Express.Multer.File,
     @Body() dto: CreatePickupDto,
+    @Req() req: any,
   ) {
-    const pickup = await this.pickupsService.createPickup(dto, image);
+    const requestedById = req?.user?.sub || req?.user?._id || req?.user?.id;
+    const pickup = await this.pickupsService.createPickup(
+      dto,
+      image,
+      '68d24a95fee477ec06fd02a9',
+    );
     return {
       status: 'success',
       message: 'Pickup created',

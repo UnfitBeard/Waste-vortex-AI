@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 export enum WasteType {
   ORGANIC = 'organic',
   PLASTIC = 'plastic',
@@ -44,6 +45,30 @@ export class Pickup {
 
   @Prop({ type: Date })
   evaluatedAt?: Date;
+
+  /* who requested */
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  requestedBy: Types.ObjectId;
+
+  /*human readable address*/
+  @Prop()
+  address?: string;
+
+  /** Geo location GeoJSON */
+  @Prop({
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point',
+    },
+    coordinates: {
+      type: [Number],
+      required: false,
+      index: '2dsphere',
+    },
+  } as any)
+  geom?: { type: 'Point'; coordinates: [number, number] };
 }
 
 export const PickupSchema = SchemaFactory.createForClass(Pickup);
+PickupSchema.index({ geom: '2dsphere' });

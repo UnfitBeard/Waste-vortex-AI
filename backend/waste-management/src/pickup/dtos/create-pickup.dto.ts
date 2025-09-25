@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 // src/pickups/dtos/create-pickup.dto.ts
 import { IsEnum, IsNumber, Min, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
@@ -28,4 +29,22 @@ export class CreatePickupDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiProperty({ required: false, example: 'Block A, Room 7' })
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  /** NEW: optional device GPS */
+  @ApiProperty({ required: false, example: -0.3971 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  lat?: number;
+
+  @ApiProperty({ required: false, example: 36.9624 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  lng?: number;
 }
