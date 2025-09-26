@@ -23,7 +23,55 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Waste Vortex AI - Backend for waste management system with AI-powered contamination detection and notification system.
+
+## Features
+
+- **AI-Powered Contamination Detection**: Automatically detects contamination in waste streams using machine learning
+- **Real-time Notifications**: Sends email alerts to drivers when contamination is detected
+- **Multi-waste Type Support**: Configurable email recipients for different waste types (plastic, paper, glass, etc.)
+- **Detailed Reporting**: Provides contamination scores and labels for each detection
+
+## Notification System
+
+The system includes a robust notification system that sends email alerts to drivers when contamination is detected in their waste streams. The system supports:
+
+- Configurable email templates
+- Different email recipients for different waste types
+- Contamination details including score, label, and location
+- Optional image attachments of the contamination
+
+### Configuration
+
+Copy `.env.example` to `.env` and configure the following environment variables:
+
+```bash
+# SMTP Configuration
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@example.com
+SMTP_PASSWORD=your-email-password
+MAIL_FROM=noreply@waste-vortex.com
+
+# Driver Email Configuration
+DEFAULT_DRIVER_EMAIL=default-driver@example.com
+DRIVER_EMAIL_PLASTIC=plastic-driver@example.com
+DRIVER_EMAIL_PAPER=paper-driver@example.com
+DRIVER_EMAIL_GLASS=glass-driver@example.com
+DRIVER_EMAIL_METAL=metal-driver@example.com
+DRIVER_EMAIL_ORGANIC=organic-driver@example.com
+
+# Contamination API
+CONTAMINATION_API_URL=https://your-contamination-api-url.com
+```
+
+### Adding New Waste Types
+
+To add support for a new waste type:
+
+1. Add a new environment variable in the format `DRIVER_EMAIL_{WASTE_TYPE}`
+2. The system will automatically pick up the new configuration
 
 ## Project setup
 

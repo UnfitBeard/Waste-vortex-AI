@@ -5,6 +5,18 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as handlebars from 'handlebars';
 
+export interface EmailOptions {
+  to: string;
+  subject: string;
+  template: string;
+  context: Record<string, any>;
+  from?: string;
+  cc?: string | string[];
+  bcc?: string | string[];
+  replyTo?: string;
+  attachments?: any[];
+}
+
 @Injectable()
 export class MailService {
   private transporter: nodemailer.Transporter;
@@ -54,13 +66,42 @@ export class MailService {
   }
 
   async sendEmailVerification(email: string, verificationUrl: string): Promise<void> {
-    const html = await this.loadTemplate('email-verification', { verificationUrl });
-    
-    await this.transporter.sendMail({
-      from: this.config.get('MAIL_FROM'),
+    await this.sendEmail({
       to: email,
       subject: 'Verify Your Email',
+      template: 'email-verification',
+      context: { verificationUrl },
+    });
+  }
+
+  /**
+   * Generic method to send emails using templates
+   * @param options Email options including template and context
+   */
+  async sendEmail(options: EmailOptions): Promise<void> {
+    const {
+      to,
+      subject,
+      template,
+      context = {},
+      from = this.config.get('MAIL_FROM'),
+      cc,
+      bcc,
+      replyTo,
+      attachments = [],
+    } = options;
+
+    const html = await this.loadTemplate(template, context);
+    
+    await this.transporter.sendMail({
+      from,
+      to,
+      subject,
       html,
+      cc,
+      bcc,
+      replyTo,
+      attachments,
     });
   }
 }

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Contamination Alert - {{wasteType}} Waste</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .content { padding: 15px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px; }
+        .footer { font-size: 12px; color: #6c757d; text-align: center; margin-top: 20px; }
+        .highlight { font-weight: bold; color: #dc3545; }
+        .details { margin: 15px 0; }
+        .detail-row { margin-bottom: 10px; }
+        .label { font-weight: bold; display: inline-block; width: 150px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🚨 Contamination Alert - {{wasteType}} Waste</h2>
+    </div>
+    
+    <div class="content">
+        <p>Dear Driver,</p>
+        <p>Contamination has been detected in a {{wasteType}} waste pickup. Please review the details below:</p>
+        
+        <div class="details">
+            <div class="detail-row">
+                <span class="label">Waste Type:</span>
+                <span>{{wasteType}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Location:</span>
+                <span>{{location}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Contamination Score:</span>
+                <span class="highlight">{{score}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Detected Contaminant:</span>
+                <span>{{label}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Detection Time:</span>
+                <span>{{detectedAt}}</span>
+            </div>
+        </div>
+
+        {{#if imageUrl}}
+        <div style="margin: 20px 0;">
+            <p>Contamination Image:</p>
+            <img src="{{imageUrl}}" alt="Contamination detected" style="max-width: 100%; border: 1px solid #ddd; border-radius: 4px;" />
+        </div>
+        {{/if}}
+
+        <p>Please take appropriate action to address this contamination issue.</p>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated message. Please do not reply to this email.</p>
+        <p>© {{currentYear}} Waste Management System</p>
+    </div>
+
+    <script>
+        // This will be executed in the email client
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update current year in the footer
+            const yearElements = document.querySelectorAll('.current-year');
+            const currentYear = new Date().getFullYear();
+            yearElements.forEach(el => {
+                el.textContent = currentYear;
+            });
+        });
+    </script>
+</body>
+</html>

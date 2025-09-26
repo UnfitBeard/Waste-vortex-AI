@@ -33,11 +33,17 @@ export class PickupService {
 
     const uploaded = await this.uploadsService.uploadSingleImage(image);
 
-    // Score contamination (URL FIrst then buffer)
+    // Get location from the pickup request
+    const location = dto.address || 
+      (dto.lat && dto.lng ? `Coordinates: ${dto.lat.toFixed(4)}, ${dto.lng.toFixed(4)}` : 'Location not specified');
+    
+    // Score contamination (URL First then buffer)
     let scoreRes: { score: number; label: string };
     try {
       scoreRes = await this.contaminationClient.scoreImageByUrl(
         uploaded.secureUrl,
+        dto.wasteType,
+        location
       );
       if (Number.isNaN(scoreRes.score))
         throw new Error('Invalid score from model');
@@ -46,6 +52,8 @@ export class PickupService {
       scoreRes = await this.contaminationClient.scoreByBuffer(
         image.buffer,
         image.originalname,
+        dto.wasteType,
+        location
       );
     }
 
