@@ -30,11 +30,13 @@ export class ContaminationClient {
   async scoreImageByUrl(imageUrl: string, wasteType: string, location: string) {
     const { data } = await this.http.post('', { imageUrl });
 
-    const score = data.score ?? data.contamination_score ?? data.prediction ?? 0;
+    const score =
+      data.score ?? data.contamination_score ?? data.prediction ?? 0;
     const label = data.label ?? data.class ?? 'unknown';
-    
+
     // Send notification if contamination is detected
-    if (score > 0.3) { // Threshold can be adjusted
+    if (score > 0.3) {
+      // Threshold can be adjusted
       await this.notificationService.sendContaminationAlert({
         wasteType,
         location,
@@ -44,22 +46,29 @@ export class ContaminationClient {
         imageUrl,
       });
     }
-    
+
     return { score: Number(score), label };
   }
 
-  async scoreByBuffer(buffer: Buffer, filename: string, wasteType: string, location: string) {
+  async scoreByBuffer(
+    buffer: Buffer,
+    filename: string,
+    wasteType: string,
+    location: string,
+  ) {
     const form = new FormData();
     form.append('file', buffer, { filename });
     const { data } = await this.http.post('', form, {
       headers: form.getHeaders(),
     });
 
-    const score = data.score ?? data.contamination_score ?? data.prediction ?? 0;
+    const score =
+      data.score ?? data.contamination_score ?? data.prediction ?? 0;
     const label = data.label ?? data.class ?? 'unknown';
-    
+
     // Send notification if contamination is detected
-    if (score > 0.3) { // Threshold can be adjusted
+    if (score > 0.3) {
+      // Threshold can be adjusted
       await this.notificationService.sendContaminationAlert({
         wasteType,
         location,
@@ -68,7 +77,7 @@ export class ContaminationClient {
         detectedAt: new Date(),
       });
     }
-    
+
     return { score: Number(score), label };
   }
 }

@@ -13,9 +13,17 @@ import {
   MaxFileSizeValidator,
   FileTypeValidator,
   Req,
+  Query,
+  Patch,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { PickupService } from './pickup.service';
 import { CreatePickupDto } from './dtos/create-pickup.dto';
 
@@ -80,6 +88,37 @@ export class PickupController {
     };
   }
 
+  // Available queue
+  @Get('available')
+  @ApiQuery({ name: 'lng', required: false })
+  @ApiQuery({ name: 'lat', required: false })
+  @ApiQuery({ name: 'radiusMeters', required: false, example: 5000 })
+  @ApiQuery({ name: 'limit', required: false, example: 50 })
+  async available(
+    @Query('lng') lng?: string,
+    @Query('lat') lat?: string,
+    @Query('radiusMeters') r?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const data = await this.pickupsService.listAvailable(
+      lng != null ? Number(lng) : undefined,
+      lat != null ? Number(lat) : undefined,
+      r != null ? Number(r) : 5000,
+      limit !== undefined ? Number(limit) : 50,
+    );
+    return { status: 'success', data };
+  }
+
+  // DRIVER claims
+  @Patch(':id/claim')
+  async claim(@Param('id') id: string, @Req() req: any) {
+    const driverId = req?.user?.sub || req?.user?._id || req?.user?.id; // from JWT
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const data = await this.pickupsService.claim(id, driverId);
+    return { status: 'success', message: 'Returned to queue', data };
+  }
+
+  // Get all listed Pickups
   @Get()
   async list() {
     const pickups = await this.pickupsService.findAll();
