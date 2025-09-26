@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -11,6 +12,14 @@ import { UploadsService } from 'src/uploads/uploads.service';
 import { ContaminationClient } from './contamination.client';
 import { CreatePickupDto } from './dtos/create-pickup.dto';
 import { Express } from 'express';
+
+const ALLOWED: Record<string, string[]> = {
+  pending: ['assigned', 'cancelled'],
+  assigned: ['picked_up', 'cancelled'],
+  picked_up: ['completed'],
+  completed: [],
+  cancelled: [],
+};
 
 @Injectable()
 export class PickupService {
@@ -34,16 +43,20 @@ export class PickupService {
     const uploaded = await this.uploadsService.uploadSingleImage(image);
 
     // Get location from the pickup request
-    const location = dto.address || 
-      (dto.lat && dto.lng ? `Coordinates: ${dto.lat.toFixed(4)}, ${dto.lng.toFixed(4)}` : 'Location not specified');
-    
+    // eslint-disable-next-line prettier/prettier
+    const location =
+      dto.address ||
+      (dto.lat && dto.lng
+        ? `Coordinates: ${dto.lat.toFixed(4)}, ${dto.lng.toFixed(4)}`
+        : 'Location not specified');
+
     // Score contamination (URL First then buffer)
     let scoreRes: { score: number; label: string };
     try {
       scoreRes = await this.contaminationClient.scoreImageByUrl(
         uploaded.secureUrl,
         dto.wasteType,
-        location
+        location,
       );
       if (Number.isNaN(scoreRes.score))
         throw new Error('Invalid score from model');
@@ -53,7 +66,7 @@ export class PickupService {
         image.buffer,
         image.originalname,
         dto.wasteType,
-        location
+        location,
       );
     }
 
@@ -77,6 +90,50 @@ export class PickupService {
     });
 
     return doc.save();
+  }
+
+  // List all available Jobs on a 5000 meter radius
+  async listAvailable(
+    lng?: number,
+    lat?: number,
+    radiusMeters = 5000,
+    limit = 50,
+  ) {
+    const q: any = {
+      status: 'pending',
+      $or: [{ assignedTo: { $exists: false } }, { assignedTo: null }],
+    };
+    if (lng != null && lat != null) {
+      q.geom = {
+        $near: {
+          $geometry: { type: 'Point', coordinates: [lng, lat] },
+          $maxDistance: radiusMeters,
+        },
+      };
+    }
+    return this.pickupModel
+      .find(q)
+      .limit(limit)
+      .sort({ contaminationScore: -1 });
+  }
+
+  /** DRIVER claims pending + unassigned -> assigned */
+  async claim(id: string, driverId: string) {
+    const updated = await this.pickupModel.findOneAndUpdate(
+      {
+        _id: id,
+        status: 'pending',
+        $or: [{ assignedTo: { $exists: false } }, { assignedTo: null }],
+      },
+      {
+        $set: {
+          status: 'assigned',
+          assignedTo: new Types.ObjectId(driverId),
+          assignedAt: new Date(),
+        },
+      },
+      { new: true },
+    );
   }
 
   async findAll() {
