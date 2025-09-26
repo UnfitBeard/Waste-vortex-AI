@@ -25,6 +25,9 @@ export class MailService {
   constructor(private config: ConfigService) {
     this.templatesDir = path.join(__dirname, 'templates');
     
+    // Register Handlebars helpers
+    this.registerHandlebarsHelpers();
+    
     this.transporter = nodemailer.createTransport({
       host: this.config.get('SMTP_HOST'),
       port: this.config.get('SMTP_PORT'),
@@ -33,6 +36,27 @@ export class MailService {
         user: this.config.get('SMTP_USER'),
         pass: this.config.get('SMTP_PASSWORD'),
       },
+    });
+  }
+
+  private registerHandlebarsHelpers() {
+    // Helper to check if a string contains another string
+    handlebars.registerHelper('contains', function(str: string, substr: string) {
+      return str && str.includes(substr);
+    });
+
+    // Helper to replace parts of a string using regex
+    handlebars.registerHelper('replace', function(str: string, pattern: string, replacement: string) {
+      if (!str) return '';
+      const regex = new RegExp(pattern, 'g');
+      return str.replace(regex, replacement);
+    });
+
+    // Helper to concatenate strings
+    handlebars.registerHelper('concat', function(...args: any[]) {
+      // Remove the last argument (handlebars options object)
+      args.pop();
+      return args.join('');
     });
   }
 

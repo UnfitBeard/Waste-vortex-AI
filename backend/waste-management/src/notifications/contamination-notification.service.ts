@@ -42,12 +42,35 @@ export class ContaminationNotificationService {
     return this.driverEmails[normalizedType] || defaultEmail;
   }
 
+  private optimizeCloudinaryUrl(imageUrl: string): string {
+    try {
+      // If it's already a Cloudinary URL, add optimization parameters
+      if (imageUrl.includes('res.cloudinary.com')) {
+        // Remove any existing transformations
+        const baseUrl = imageUrl.split('/').slice(0, 7).join('/');
+        const publicIdWithExtension = imageUrl.split('/').slice(7).join('/').split('?')[0];
+        
+        // Add Cloudinary transformations for better email display
+        return `${baseUrl}/c_limit,w_800,h_600,f_auto,q_auto/${publicIdWithExtension}`;
+      }
+      return imageUrl;
+    } catch (e) {
+      console.error('Error optimizing Cloudinary URL:', e);
+      return imageUrl;
+    }
+  }
+
   async sendContaminationAlert(notificationData: ContaminationNotificationData): Promise<void> {
     const { wasteType, location, score, label, detectedAt, imageUrl } = notificationData;
     
     try {
       const driverEmail = this.getDriverEmail(wasteType);
       const formattedDate = detectedAt.toLocaleString();
+      
+      // Get the dashboard URL from config or use a default
+      const dashboardBaseUrl = this.configService.get<string>('DASHBOARD_URL') || 'http://localhost:3000';
+      const dashboardUrl = `${dashboardBaseUrl}/dashboard`; // Adjust the path as needed
+      
       const emailContext: Record<string, any> = {
         wasteType,
         location,
@@ -55,11 +78,12 @@ export class ContaminationNotificationService {
         label,
         detectedAt: formattedDate,
         currentYear: new Date().getFullYear(),
+        dashboardUrl,
       };
 
-      // Only add imageUrl to context if it exists
+      // Add optimized image URL to context if it exists
       if (imageUrl) {
-        emailContext.imageUrl = imageUrl;
+        emailContext.imageUrl = this.optimizeCloudinaryUrl(imageUrl);
       }
       
       await this.mailService.sendEmail({
